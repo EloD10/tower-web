@@ -98,7 +98,9 @@ where T: DeserializeOwned,
                 use http::header;
 
                 if let Some(value) = ctx.request().headers().get(header::CONTENT_TYPE) {
-                    match value.as_bytes() {
+                    let content_type = value.as_bytes().to_ascii_lowercase();
+
+                    match &content_type[..] {
                         b"application/json" => {
                             let state = State::Body(body.collect());
 
@@ -109,7 +111,7 @@ where T: DeserializeOwned,
                             
                             SerdeFuture { state, is_json: false }   
                         }
-                        _ => panic!("Content type doesn't know")
+                        _ => panic!("Unknown content type")
                     } 
                 } else {
                     panic!()
@@ -153,7 +155,7 @@ where T: DeserializeOwned,
                                 Some(Error::internal_error())
                         })
                     } else {
-                        serde_urlencoded::from_bytes(&res[..])
+                        ::serde_urlencoded::from_bytes(&res[..])
                             .map_err(|_| {
                                 // TODO: Handle error better
                                 Some(Error::internal_error())
